@@ -1,31 +1,52 @@
-function plot_data(filename, varargin)
-% reads from text file. Does not include Infrared
-% varargin = 'variable1', 'variable2', ... OR 'All'
-% - allowed variables: 'DHT1_OUTTemp', 'DHT1_OUTHum', 'DHT2_INTemp', 'DHT2_INHum', 'Soil'
-% filename: data file to be analyzed
+function plot_data(filenameORtable, timeRange, varargin)
+% filenameORtable: valid filename or table
+% varargin options:
+% 'variable1', 'variable2', ...  OR  'All'
+% - allowed variables: 'OutTemp', 'OutHum', 'InTemp', 'InHum', 'Soil',
+% 'Infrared'
 
-    T = readtable(filename);
-    time = table2array(T(:, {'Time'}));
-    T.Time = []; % remove time so do not plot
-    T.Device = [];
-    T.Infrared = [];
+% get table of data
+    if ~isa(filenameORtable, 'table') % is a filename
+        T = get_data(filenameORtable);
+    else
+        T = filenameORtable;
+    end
+
+    if isequal(timeRange, 'All')
+        valuesInRange = T;
+    else
+        % create new table with only values in range
+        startTime = timeRange(1);
+        endTime = timeRange(2);
+        rows = (T.Time >= startTime) & (T.Time <= endTime);
+        valuesInRange = T(rows, :);
+    end
+    
+    time = table2array(valuesInRange(:, {'Time'})); % get time vector
+    valuesInRange.Time = []; % remove time so do not plot
     
     % variables: cell of names of variables to be plotted
-    if isequal(char(varargin), char('All'))
-        variables=T.Properties.VariableNames
+    assignin('base', 'varargin', varargin)
+    if isequal(varargin, {'All'})
+        variables=valuesInRange.Properties.VariableNames;
     else
-        variables = varargin
+        variables = varargin;
     end
-    C = {'k','b','r','g','y',[.5 .6 .7],[.8 .2 .6]}; % colors
     
+    % color code variables
+    keys = {'OutTemp', 'OutHum', 'InTemp', 'InHum', 'Soil', 'Infrared'};
+    values = {'k','b','m','g','y','r'};
+    colormap = containers.Map(keys, values);
+    
+    % plot
     figure()
     i = 1;
+    assignin('base', 'v', variables)
     for var=variables
-        data = table2array(T(:,var));
-        line(time, data, 'color', cell2mat(C(i)))
+        data = table2array(valuesInRange(:,var));
+        line(time, data, 'Color', colormap(cell2mat(var)))
         i = i + 1;
         hold on
     end
     legend(variables)
-    title(filename)
 end 

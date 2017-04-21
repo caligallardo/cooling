@@ -1,30 +1,61 @@
-function [v1, v2] = compare_datalogs(filename1, filename2, variableName, varargin)
-% variableName: 'OutTemp','OutHum','InTemp','InHum','Soil', OR 'Infrared'
+function compare_datalogs(filenames, variableNames, timeWindow)
+% filenames: {filename1, filename2, ...} limited to 4
+% variableNames: {variableName1, variableName2, ...} OR 'All'
+% Possible variables: 'OutTemp','OutHum','InTemp','InHum','Soil', OR 'Infrared'
+% timeWindow: [startTime, endTime]
 % files must be text files of standard datalog format
-% plots data vector from each file for variable
-% returns array where first column is readings from filename1, second from
-% filename2
-% plotting: optional. 'off' turns plotting off. Defaults to 'on'
 
-table1 = get_fridge_data(filename1);
-table2 = get_fridge_data(filename2);
-v1 = table1{:, variableName};
-v2 = table2{:, variableName};
-
-% cut for same length **** should change this to time alignment
-l = min(length(v1), length(v2));
-v1 = v1(1:l);
-assignin(v1, 
-v2 = v2(1:l);
-
-if ~isequal(varargin, {'off'})
-    figure()
-    title(strcat(variableName, ': ', filename1, ', ', filename2));
-    plot(v1)
-    hold on
-    plot(v2)
-    legend({filename1, filename2})
-    xlabel('Time') % **** units?
+numFiles = length(filenames);
+tables = cell(1, numFiles);
+if isequal(timeWindow, 'All')
+    for i=1:numFiles
+       tables{i} = get_data(filenames{i}); 
+    end
+else
+    for i=1:numFiles
+       tables{i} = reduce_window(get_data(filenames{i}), timeWindow(1), timeWindow(2)); 
+    end
 end
+
+% variables: cell of names of variables to be plotted
+if isequal(variableNames, 'All')
+    variables={'OutTemp','OutHum','InTemp','InHum','Soil','Infrared'};
+else
+    variables = variableNames;
+end
+
+% assign colors to variables
+keys = {'OutTemp', 'OutHum', 'InTemp', 'InHum', 'Soil', 'Infrared'};
+values = {'k','b','m','g','y','r'};
+colormap = containers.Map(keys, values);
+
+% assign line types to files. limit of 4
+keys = [1, 2, 3, 4];
+values = {'-','--',':', '-.'};
+linemap = containers.Map(keys, values);
+
+allvar = cell( % for legend
+
+% plot
+    figure()
+    i = 1;
+    assignin('base', 'v', variables)
+    for v=1:length(variables)
+        var = variables{v};
+        for tabNum=1:numFiles
+            tab = tables{tabNum};
+            assignin('base', 'var', var);
+            time = table2array(tab(:, 'Time'));
+            data = table2array(tab(:,var));
+            line(time, data, 'Color', colormap(var), 'LineStyle', linemap(tabNum))
+            hold on
+            
+        end
+    end
+    myTitle = filenames{1};
+    for i = 2:numFiles
+        myTitle = strcat(myTitle, ', ', filenames{i});
+    end
+    title(myTitle);
 
 end
