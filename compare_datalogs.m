@@ -1,19 +1,19 @@
-function compare_datalogs(filenames, variableNames, timeWindow)
+function compare_datalogs(inputTables, variableNames, timeWindow)
 % filenames: {filename1, filename2, ...} limited to 4
 % variableNames: {variableName1, variableName2, ...} OR 'All'
 % Possible variables: 'OutTemp','OutHum','InTemp','InHum','Soil', OR 'Infrared'
-% timeWindow: [startTime, endTime]
+% timeWindow: [startTime, endTime] OR 'All'
 % files must be text files of standard datalog format
 
-numFiles = length(filenames);
-tables = cell(1, numFiles);
+numTables = length(inputTables);
+tables = cell(1, numTables);
 if isequal(timeWindow, 'All')
-    for i=1:numFiles
-       tables{i} = get_data(filenames{i}); 
+    for i=1:numTables
+       tables{i} = inputTables{i}; 
     end
 else
-    for i=1:numFiles
-       tables{i} = reduce_window(get_data(filenames{i}), timeWindow(1), timeWindow(2)); 
+    for i=1:numTables
+        tables{i} = reduce_window(inputTables{i}, timeWindow(1), timeWindow(2)); 
     end
 end
 
@@ -34,7 +34,7 @@ keys = [1, 2, 3, 4];
 values = {'-','--',':', '-.'};
 linemap = containers.Map(keys, values);
 
-allvar = cell(1, length(variables)*numFiles); % for legend
+allvar = cell(1, length(variables)*numTables); % for legend
 
 % plot
     figure()
@@ -42,7 +42,7 @@ allvar = cell(1, length(variables)*numFiles); % for legend
     assignin('base', 'v', variables)
     for v=1:length(variables)
         var = variables{v};
-        for tabNum=1:numFiles
+        for tabNum=1:numTables
             tab = tables{tabNum};
             assignin('base', 'var', var);
             time = table2array(tab(:, 'Time'));
@@ -53,11 +53,11 @@ allvar = cell(1, length(variables)*numFiles); % for legend
             i = i + 1;
         end
     end
-    myTitle = filenames{1};
-    for i = 2:numFiles
-        myTitle = [myTitle, ', ', filenames{i}];
-    end
-    title(myTitle);
+%     myTitle = inputTables{1};
+%     for i = 2:numTables
+%         %myTitle = [myTitle, ', ', inputTables{i}];
+%     end
+%     title(myTitle);
     legend(allvar);
 
 end

@@ -1,7 +1,7 @@
-function adj_time_vec = adj_time(time_vec)
+function adj_time_vec = adj_time(time_vec, step_ahead)
 % given time vector with resets,
 % returns time vector where resets pick up at 30 min after last reading
-step_ahead = 30 * 60;
+% step_ahead = 30 * 60;
 
 % check input is valid
 [m, n] = size(time_vec);
