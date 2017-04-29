@@ -17,7 +17,7 @@ function [dataTable] = get_data (filename)
             % is reset header
         else
             % add to data cell
-            c = [c;newrow]; % is there a way to know (or est) the size of c in advance?
+            c = [c;newrow];
         end
         tline = fgetl(fid);
     end
@@ -26,6 +26,16 @@ function [dataTable] = get_data (filename)
     % adjust for time resets
     [m, n] = size(c);
     c(2:m, 1) = num2cell(adj_time(cell2mat(c(2:m, 1))));
+    
+    % difference columns
+    header = {'TempDiff', 'HumDiff'}
+    td=cell2mat(c(2:m, 4))-cell2mat(c(2:m, 2))
+    length(td)
+    tempDiff = num2cell(td)
+    humDiff = num2cell(cell2mat(c(2:m, 5))-cell2mat(c(2:m, 3)));
+    diffCols = [header; [tempDiff, humDiff]];
+    
+    c = [c, diffCols];
     
     % create table from cell c
     dataTable = cell2table(c(2:m, :), 'VariableNames', c(1, :));    
