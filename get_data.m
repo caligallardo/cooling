@@ -25,13 +25,12 @@ function [dataTable] = get_data (filename)
     
     % adjust for time resets
     [m, n] = size(c);
-    c(2:m, 1) = num2cell(adj_time(cell2mat(c(2:m, 1))));
+    c(2:m, 1) = num2cell(adj_time(cell2mat(c(2:m, 1)), 30));
     
     % difference columns
     header = {'TempDiff', 'HumDiff'}
-    td=cell2mat(c(2:m, 4))-cell2mat(c(2:m, 2))
-    length(td)
-    tempDiff = num2cell(td)
+    td=cell2mat(c(2:m, 4))-cell2mat(c(2:m, 2));
+    tempDiff = num2cell(td);
     humDiff = num2cell(cell2mat(c(2:m, 5))-cell2mat(c(2:m, 3)));
     diffCols = [header; [tempDiff, humDiff]];
     

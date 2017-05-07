@@ -1,21 +1,15 @@
-function compare_datalogs(inputTables, variableNames, timeWindow)
+function compare_datalogs(variableNames, timeWindow, varargin)
 % filenames: {filename1, filename2, ...} limited to 4
 % variableNames: {variableName1, variableName2, ...} OR 'All'
 % Possible variables: 'OutTemp','OutHum','InTemp','InHum','Soil', OR 'Infrared'
 % timeWindow: [startTime, endTime] OR 'All'
 % files must be text files of standard datalog format
 
+inputTables = varargin;
 numTables = length(inputTables);
-tables = cell(1, numTables);
-if isequal(timeWindow, 'All')
-    for i=1:numTables
-       tables{i} = inputTables{i}; 
-    end
-else
-    for i=1:numTables
-        tables{i} = reduce_window(inputTables{i}, timeWindow(1), timeWindow(2)); 
-    end
-end
+
+% reduce window
+tables = cell_of_tables_reduce_window(inputTables, timeWindow)
 
 % variables: cell of names of variables to be plotted
 if isequal(variableNames, 'All')
@@ -45,7 +39,7 @@ allvar = cell(1, length(variables)*numTables); % for legend
         for tabNum=1:numTables
             tab = tables{tabNum};
             assignin('base', 'var', var);
-            time = table2array(tab(:, 'Time'));
+            time = table2array(tab(:, 1));
             data = table2array(tab(:,var));
             line(time, data, 'Color', colormap(var), 'LineStyle', linemap(tabNum))
             hold on
@@ -53,11 +47,12 @@ allvar = cell(1, length(variables)*numTables); % for legend
             i = i + 1;
         end
     end
-%     myTitle = inputTables{1};
-%     for i = 2:numTables
-%         %myTitle = [myTitle, ', ', inputTables{i}];
-%     end
-%     title(myTitle);
+
     legend(allvar);
 
+    mytitle = inputname(3);
+    for i=2:numTables
+        mytitle = strcat(mytitle, ', ', inputname(i+2));
+    end
+    title(mytitle)
 end
