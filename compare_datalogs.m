@@ -1,9 +1,10 @@
 function compare_datalogs(variableNames, timeWindow, varargin)
-% filenames: {filename1, filename2, ...} limited to 4
 % variableNames: {variableName1, variableName2, ...} OR 'All'
-% Possible variables: 'OutTemp','OutHum','InTemp','InHum','Soil', OR 'Infrared'
+% Possible variables: 'OutTemp','OutHum','InTemp','InHum','Soil',
+% % 'Infrared', 'TempDiff', OR 'HumDiff'
+% % 'All' plots 'OutTemp','OutHum','InTemp','InHum','Soil', 'Infrared' only
 % timeWindow: [startTime, endTime] OR 'All'
-% files must be text files of standard datalog format
+% varargin: tables to be plotted
 
 inputTables = varargin;
 numTables = length(inputTables);
@@ -39,8 +40,8 @@ allvar = cell(1, length(variables)*numTables); % for legend
         for tabNum=1:numTables
             tab = tables{tabNum};
             assignin('base', 'var', var);
-            time = table2array(tab(:, 1));
-            data = table2array(tab(:,var));
+            time = tab{:, 'Time'};
+            data = tab{:,var};
             line(time, data, 'Color', colormap(var), 'LineStyle', linemap(tabNum))
             hold on
             allvar{1, i} = [var, ' ', num2str(tabNum)];

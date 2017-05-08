@@ -11,37 +11,34 @@ function [dataTable] = get_data (filename)
     reset =  0;
      % get rid of all lines after the first beginning with 'Device'
     unwanted_row_nums = find(ismember(T.Device, 'Device'));
-    for i = 1:length(unwanted_row_nums)
-        T(unwanted_row_nums(i), :) = [];
+    for i = unwanted_row_nums
+        T(i, :) = [];
         reset = 1;
     end
     
     T.Properties.VariableNames = {'Device' 'Time' 'OutTemp' 'OutHum' 'InTemp' 'InHum' 'Soil' 'Infrared'};
     
     % convert to doubles if needed
-    % if no resets, all cols except 'Device' will already be double
-    % if # resets >= 1, all cols will be cell
     if reset
         T.Time = cellfun(@str2num, T.Time);
         T.OutTemp = cellfun(@str2num, T.OutTemp);
         T.OutHum = cellfun(@str2num, T.OutHum);
         T.InTemp = cellfun(@str2num, T.InTemp);
-        T.InHum = cellfun(@str2num, T.InHum);
+        T.InHum = cellfun(@str2num, T.
         T.Soil = cellfun(@str2num, T.Soil);
         T.Infrared = cellfun(@str2num, T.Infrared);
     end
     
     % adjust for time resets
     T{:,'Time'} = adj_time(T{:, 'Time'}, 30);
-    assignin('base', 'get_table_T', T);
     
     % difference columns
     temp_diffs = T{:,'InTemp'}-T{:,'OutTemp'};
     hum_diffs = T{:,'InHum'}-T{:,'OutHum'};
+    header = {'TempDiff', 'HumDiff'};
     diff_table = table(temp_diffs, hum_diffs, 'VariableNames', {'TempDiff' 'HumDiff'});
-    assignin('base', 'diff_table', diff_table);
     
     % create table from cell c
-    dataTable = [T, diff_table];    
+    dataTable = [T; diff_table];    
     
 end
