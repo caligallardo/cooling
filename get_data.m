@@ -5,38 +5,41 @@ function [dataTable] = get_data (filename)
     % outputs a table w/ columns: 'Time',
     % 'OutTemp','OutHum','InTemp','InHum','Soil','Infrared'
     
-    c = {'Time','OutTemp','OutHum','InTemp','InHum','Soil','Infrared'}; % create cell array to convert to table
+    T = readtable(filename);
     
-    fid = fopen(filename);
-    tline = fgetl(fid);
-    while ischar(tline)
-        %disp(tline)
-        linecell = textscan(tline, '%s %f %f %f %f %f %f %f', 'Delimiter', ',');
-        newrow = linecell(2:length(linecell));
-        if isempty(linecell{2})
-            % is reset header
-        else
-            % add to data cell
-            c = [c;newrow];
-        end
-        tline = fgetl(fid);
+    % get rid of resets
+    reset =  0;
+     % get rid of all lines after the first beginning with 'Device'
+    unwanted_row_nums = find(ismember(T.Device, 'Device'));
+    for i = 1:length(unwanted_row_nums)
+        T(unwanted_row_nums(i), :) = [];
+        reset = 1;
     end
-    fclose(fid);    
+    
+    T.Properties.VariableNames = {'Device' 'Time' 'OutTemp' 'OutHum' 'InTemp' 'InHum' 'Soil' 'Infrared'};
+    
+    % convert to doubles if needed
+    if reset
+        T.Time = cellfun(@str2num, T.Time);
+        T.OutTemp = cellfun(@str2num, T.OutTemp);
+        T.OutHum = cellfun(@str2num, T.OutHum);
+        T.InTemp = cellfun(@str2num, T.InTemp);
+        T.InHum = cellfun(@str2num, T.InHum);
+        T.Soil = cellfun(@str2num, T.Soil);
+        T.Infrared = cellfun(@str2num, T.Infrared);
+    end
     
     % adjust for time resets
-    [m, n] = size(c);
-    c(2:m, 1) = num2cell(adj_time(cell2mat(c(2:m, 1)), 30));
+    T{:,'Time'} = adj_time(T{:, 'Time'}, 30);
+    assignin('base', 'get_table_T', T);
     
     % difference columns
-    header = {'TempDiff', 'HumDiff'}
-    td=cell2mat(c(2:m, 4))-cell2mat(c(2:m, 2));
-    tempDiff = num2cell(td);
-    humDiff = num2cell(cell2mat(c(2:m, 5))-cell2mat(c(2:m, 3)));
-    diffCols = [header; [tempDiff, humDiff]];
-    
-    c = [c, diffCols];
+    temp_diffs = T{:,'InTemp'}-T{:,'OutTemp'};
+    hum_diffs = T{:,'InHum'}-T{:,'OutHum'};
+    diff_table = table(temp_diffs, hum_diffs, 'VariableNames', {'TempDiff' 'HumDiff'});
+    assignin('base', 'diff_table', diff_table);
     
     % create table from cell c
-    dataTable = cell2table(c(2:m, :), 'VariableNames', c(1, :));    
+    dataTable = [T, diff_table];    
     
 end
