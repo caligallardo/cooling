@@ -44,7 +44,7 @@ allvar = cell(1, length(variables)*numTables); % for legend
             data = tab{:,var};
             line(time, data, 'Color', colormap(var), 'LineStyle', linemap(tabNum))
             hold on
-            allvar{1, i} = [var, ' ', num2str(tabNum)];
+            allvar{1, i} = [var, ' ', inputname(tabNum+2)];
             i = i + 1;
         end
     end
